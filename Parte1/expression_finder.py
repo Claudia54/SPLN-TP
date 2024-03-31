@@ -1,10 +1,3 @@
-def criar_lista_tuplos(dataset_file):
-    lista_tuplos = []
-    with open(dataset_file, 'r', encoding='utf-8') as file:
-        for line in file:
-            expressao, valor = line.strip().split(' : ')
-            lista_tuplos.append((expressao, float(valor)))
-    return lista_tuplos
 
 def encontrar_correspondencias(text_file, lista_tuplos):
     with open(text_file, 'r', encoding='utf-8') as file:
