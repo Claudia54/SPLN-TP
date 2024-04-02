@@ -1,19 +1,15 @@
+import json
+
 def create_bd():
     bd = {}
     try:
-        with open("merged_dataset.txt", 'r') as file:
-            content = file.read()
-            linhas = content.split('\n')
-            for line in linhas[:-1]:
-                word, value = line.strip().split(' : ')
-                #print(f"{word} | {float(value)}")
-                bd[word] = float(value) 
+        with open("fixed_merged.json", 'r') as file:
+            bd = json.load(file)
     except FileNotFoundError:
         print(f"File not found.")
     return bd
 
 bd = create_bd()
-
 
 def encontrar_correspondencias(text_file):
     with open(text_file, 'r', encoding='utf-8') as file:
@@ -28,7 +24,7 @@ def encontrar_correspondencias(text_file):
 
     i = 0
     while i < len(palavras):
-        for j in range(len(palavras), i, -1):
+        for j in range(i+5, i, -1):
             expressao_composta = '_'.join(palavras[i:j])
             for expressao, pontuacao in bd.items():
                 if expressao_composta == expressao:
@@ -52,5 +48,9 @@ text_file= "Capitulos/Capitulo1.txt"
 correspondencias = encontrar_correspondencias(text_file)
 
 print("Correspondências encontradas:")
+total = 0
 for palavra, pontuacao in correspondencias:
+    total += float(pontuacao)
     print(f"{palavra} : {pontuacao}")
+print(f"total: {total}")
+print(f"media do capitulo: {total/len(palavra)}")
