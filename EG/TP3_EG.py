@@ -1,7 +1,6 @@
 from lark import Lark, Transformer, Visitor, Discard, Token,Tree
 from lark.visitors import Interpreter
 from collections import Counter
-from pydot import Dot, Node, Edge
 from lark.tree import pydot__tree_to_png
 import pprint
 import pygraphviz as pgv
@@ -143,7 +142,6 @@ texto ="""Numero myfunction (number){
         }
 """ 
 
-
 texto2 ="""
 string variavel
 dict a
@@ -185,6 +183,12 @@ if(w<5){
 }
 
 """ 
+texto3 ="""
+print("w")
+if(x>5){
+print("novo")
+}
+""" 
 
 #texto ="""Number myfunction (number){
 #                Number x
@@ -216,6 +220,7 @@ class TransformerLinguagem(Interpreter):
         self.aninhado = 0
         self.print=0
         self.input=0
+        self.counter=0
         self.substituir =0
         self.variaveisTotais=[]
         self.graph = pgv.AGraph(directed=True)
@@ -256,6 +261,7 @@ class TransformerLinguagem(Interpreter):
 
     def create(self, items):
         val = self.visit_children(items)
+        self.graph.add_node(items, shape="oval")
         tipo = None
         variavel = None
         if val[0].type == 'TYPE':
@@ -280,7 +286,13 @@ class TransformerLinguagem(Interpreter):
         pass
     
     def print_string (self, items):
+        self.counter+=1
         val = self.visit_children(items)
+        print("ENTREI AQUI")
+        instruction_text = f"print('{val[0].value}')"
+        self.graph.add_node(self.counter, shape="oval", label=instruction_text)
+        if(self.counter >1):
+            self.graph.add_edge((self.counter)-1, self.counter)   
         if len(val) > 1:
             variavel = str(val[1])
             flag = True
@@ -298,7 +310,10 @@ class TransformerLinguagem(Interpreter):
 
     def print_var (self, items):
         val = self.visit_children(items)
+        print(" FOI AQUI QUE ENTREI ")
         variavel = str(val[0])
+        instruction_text = f"print('{variavel}')"
+        self.graph.add_node("Print", shape="oval", label=instruction_text)
         flag = True
         nivel_atual = self.nivel
         while(nivel_atual>=0 and flag):
@@ -316,6 +331,9 @@ class TransformerLinguagem(Interpreter):
 
     def input_string (self, items):
         val = self.visit_children(items)
+        print("ENTREI AQUI")
+        instruction_text = f"input('{val[0].value}')"
+        #self.graph.add_node(instruction_text, shape="oval", label=instruction_text)
         if len(val) > 1:
             variavel = str(val[1])
             flag = True
@@ -484,6 +502,7 @@ class TransformerLinguagem(Interpreter):
     
     def func_atr(self, items):
         val = self.visit_children(items)
+
         name = val[0]
         indice = val[1]                       
         flag_name = True
@@ -576,6 +595,7 @@ class TransformerLinguagem(Interpreter):
         tudo = self.visit_children(items)
         expressao = tudo[0]
         linhas = tudo[1]
+        self.graph.add_node(tudo[0], shape="diamond")
         dicionario = self.variaveis[self.nivel]
         for keys in dicionario.keys():
             val = dicionario[keys]
@@ -619,9 +639,10 @@ class TransformerLinguagem(Interpreter):
         return items
 
 
-    def if_statement(self, items):
+    def if_statement(self, items): 
         self.condicional+=1
         self.nivel += 1
+        self.counter +=1 
         if self.strut_controlo:
             self.aninhado += 1
             if (self.struct_if):
@@ -629,9 +650,20 @@ class TransformerLinguagem(Interpreter):
         self.strut_controlo.append(1)
         self.struct_if.append(1)
         self.variaveis[self.nivel] = {}
-        tudo = self.visit_children(items)
-        expressao = tudo[0]
-        linhas = tudo[1]
+        print("AQUIIII")
+        variable = items.children[0].children[0].children[0].children[0].value
+        number = items.children[0].children[1].children[0].children[0].value
+        symbol = items.children[0].data
+        print(variable)
+        print(number)
+        print(symbol)
+        #print(tudo[0])
+        #expressao = tudo[0]
+        instruction_text =  f"{variable}{symbol}{number}"
+        self.graph.add_node(self.counter, shape="diamond", label= instruction_text)
+        if(self.counter >1):
+            self.graph.add_edge((self.counter)-1, self.counter)   
+        #linhas = tudo[1]
         dicionario = self.variaveis[self.nivel]
         for keys in dicionario.keys():
             val = dicionario[keys]
@@ -798,6 +830,11 @@ class TransformerLinguagem(Interpreter):
             return str(val[0])
         return val[0]
     
+    def visualizar(self):
+        # Salva e exibe o gráfico
+        self.graph.draw("control_flow_graph.png", prog="dot", format="png")
+        
+    
 
     def gerar_relatorio(self):
     
@@ -909,9 +946,10 @@ class TransformerLinguagem(Interpreter):
     
     
 p = Lark(grammar2) 
-tree1 = p.parse(texto2)
+tree1 = p.parse(texto3)
 analiser= TransformerLinguagem()
-tree= analiser.visit(tree1)
+#tree= analiser.visit(tree1)
 treeT = analiser.transform(tree1)
 #tree_png = p.tree_to_png(treeT, "tree.png")
 analiser.gerar_relatorio()
+analiser.visualizar()
