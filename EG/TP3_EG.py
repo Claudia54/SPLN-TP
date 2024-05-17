@@ -1,6 +1,8 @@
 from lark import Lark, Transformer, Visitor, Discard, Token,Tree
 from lark.visitors import Interpreter
 from collections import Counter
+from pydot import Dot, Node, Edge
+from aux import *
 from lark.tree import pydot__tree_to_png
 import pprint
 import pygraphviz as pgv
@@ -10,14 +12,16 @@ grammar2 = '''
 start: codigo +
 codigo : def_func | linhas
         
-linhas : while_loop
+linhas : linha+
+
+linha   :while_loop
         | if_statement
         | for_loop
         | create
         | atribuicao
         | do_while_statement
         | print_statement
-        | input_statement
+        | input_statement   
 
 
 print_statement: "print" "("  STRING ("," VAR)? ")" -> print_string
@@ -41,14 +45,14 @@ expressao : expressao "+" expressao -> adicao
          | expressao -> exp_exp
          | val -> exp_val
          | func
-         | func_atr -> func_atr_exp
+         | func_atr
 
-est_dados: dict -> est_dados_dict
-         | array -> est_dados_array
-         | tuple -> est_dados_tuple
-         | list -> est_dados_list
+est_dados: dict 
+         | array
+         | tuple
+         | list 
 
-func : VAR list
+func : VAR "(" val ")"
 func_atr : VAR "[" def_val "]"
 
 bool_expressao : expressao "<" expressao  -> menor
@@ -57,25 +61,25 @@ bool_expressao : expressao "<" expressao  -> menor
             | expressao ">=" expressao    -> maior_igual
             | expressao "==" expressao    -> igual
             | expressao "!=" expressao    -> diferente
-            | (expressao|bool_expressao) ("&&" (expressao|bool_expressao))+       
-            | (expressao|bool_expressao) ("||" (expressao|bool_expressao))+     
+            | (expressao|bool_expressao) ("&&" (expressao|bool_expressao))+   -> bool_and    
+            | (expressao|bool_expressao) ("||" (expressao|bool_expressao))+   -> bool_or  
 
-def_func : TYPE VAR def_list  "{" linhas+ (RETURN val)? "}"
+def_func : TYPE VAR def_list  "{" linhas ("return" val)? "}"
 
-while_loop : "while" "(" bool_expressao ")" "{" linhas+ "}"
+while_loop : "while" "(" bool_expressao ")" "{" linhas "}"
 
-do_while_statement :  "do"  "{" linhas+ "}" "while" "(" bool_expressao ")"
+do_while_statement :  "do"  "{" linhas "}" "while" "(" bool_expressao ")"
 
 
-if_statement : "if" "(" bool_expressao ")" "{" linhas+ "}" elif_statement* else_statement?
-elif_statement : "elif" "(" bool_expressao ")" "{" linhas+ "}"
-else_statement : "else" "{" linhas+ "}"
+if_statement : "if" "(" bool_expressao ")" "{" linhas "}" elif_statement* else_statement?
+elif_statement : "elif" "(" bool_expressao ")" "{" linhas "}"
+else_statement : "else" "{" linhas "}"
 
 
 intervalo : VAR 
           | array
 
-for_loop : "for" VAR "in" intervalo "{" linhas+ "}"
+for_loop : "for" VAR "in" intervalo "{" linhas "}"
 
 list : "(" (val ("," val)*)? ")"
 
@@ -131,22 +135,21 @@ frase = "+ [100,200][3,12]"
 
 
 
-texto ="""Numero myfunction (number){
-                Numero x
-                if(number<5){
-                        x=x+1
-                }else{
-                        x=x-1
-                }
-                return x
-        }
+texto1 ="""
+print("w")
+do{
+print("A")
+print("b")
+}while(i < 10)
+print("x")
 """ 
+
 
 texto2 ="""
 string variavel
 dict a
-print(\"asa\")
-a = {\"hoje\":3}
+print("asa")
+a = {"hoje":3}
 numero myfunction(number, y, z){
                 numero x
                 numero b
@@ -172,9 +175,6 @@ while(i < 10){
                 i = i +1
         }   
 }
-do{
-    w=w-1
-}while(w<2)
 w=w+3
 if(w<5){
     if(w==3){
@@ -183,12 +183,51 @@ if(w<5){
 }
 
 """ 
+
 texto3 ="""
 print("w")
 if(x>5){
 print("novo")
+print("b")
+print("b")
+}elif(x>4){
+print("nnn")
+print("r")
 }
-""" 
+print("rr")
+print("final???")
+"""
+
+texto4 ="""
+print("w")
+while(x>5){
+print("novo")
+print("algo")
+print("novo")
+}
+print("fim")
+print("novo1")
+print("novo2")
+"""
+
+texto5 ="""
+print("w")
+{
+print("novo")
+print("algo")
+print("novo")
+}while(x>5)
+print("fim")
+"""
+
+
+texto6 = """
+numero myfunction(number, y, z){
+    numero x
+    print("x") 
+    return x
+}
+"""
 
 #texto ="""Number myfunction (number){
 #                Number x
@@ -220,11 +259,12 @@ class TransformerLinguagem(Interpreter):
         self.aninhado = 0
         self.print=0
         self.input=0
-        self.counter=0
         self.substituir =0
         self.variaveisTotais=[]
+        self.counter = 0 
+        self.temp = None
+        self.temp_if = {}
         self.graph = pgv.AGraph(directed=True)
-
 
     def start(self, elementos):
         r = self.visit_children(elementos)
@@ -256,12 +296,12 @@ class TransformerLinguagem(Interpreter):
 
     def linhas(self, items):
         linhas = self.visit_children(items)
+        print(linhas)
         return linhas
     
 
     def create(self, items):
         val = self.visit_children(items)
-        self.graph.add_node(items, shape="oval")
         tipo = None
         variavel = None
         if val[0].type == 'TYPE':
@@ -288,11 +328,11 @@ class TransformerLinguagem(Interpreter):
     def print_string (self, items):
         self.counter+=1
         val = self.visit_children(items)
-        print("ENTREI AQUI")
+        print(f"[print_string] counter: {self.counter} | temp: {self.temp} | val {val[0].value}")
         instruction_text = f"print('{val[0].value}')"
+        #cria nodo e liga ao anterior
         self.graph.add_node(self.counter, shape="oval", label=instruction_text)
-        if(self.counter >1):
-            self.graph.add_edge((self.counter)-1, self.counter)   
+        self = new_edge(self)
         if len(val) > 1:
             variavel = str(val[1])
             flag = True
@@ -307,13 +347,16 @@ class TransformerLinguagem(Interpreter):
             if variavel not in self.mencionado:
                 self.mencionado.append(variavel)
         self.print+=1
-
+        return instruction_text
+    
     def print_var (self, items):
+        self.counter+=1
         val = self.visit_children(items)
         print(" FOI AQUI QUE ENTREI ")
         variavel = str(val[0])
         instruction_text = f"print('{variavel}')"
-        self.graph.add_node("Print", shape="oval", label=instruction_text)
+        self.graph.add_node(self.counter, shape="oval", label=instruction_text)
+        self = new_edge(self)
         flag = True
         nivel_atual = self.nivel
         while(nivel_atual>=0 and flag):
@@ -328,12 +371,15 @@ class TransformerLinguagem(Interpreter):
         if variavel not in self.variaveisTotais:
             self.variaveisTotais.append(variavel)
         self.print+=1
+        return instruction_text
 
     def input_string (self, items):
+        self.counter+=1
         val = self.visit_children(items)
         print("ENTREI AQUI")
         instruction_text = f"input('{val[0].value}')"
-        #self.graph.add_node(instruction_text, shape="oval", label=instruction_text)
+        self.graph.add_node(self.counter, shape="oval", label=instruction_text)
+        self = new_edge(self)
         if len(val) > 1:
             variavel = str(val[1])
             flag = True
@@ -348,13 +394,17 @@ class TransformerLinguagem(Interpreter):
             if variavel not in self.mencionado:
                     self.mencionado.append(variavel)
         self.input+=1
-            
+        return instruction_text
+    
         
-
     def input_var (self, items):
+        self.counter+=1
         val = self.visit_children(items)
         variavel = str(val[0])
         flag = True
+        instruction_text = f"input('{val[0].value}')"
+        self.graph.add_node(self.counter, shape="oval", label=instruction_text)
+        self = new_edge(self)
         nivel_atual = self.nivel
         while(nivel_atual>=0 and flag):
             dicionario = self.variaveis[nivel_atual]
@@ -370,11 +420,11 @@ class TransformerLinguagem(Interpreter):
         self.input+=1
        
 
-        
     #########################TODO#####################
     #verificar se for a atribuição num dicionario para alterar
     #o valor no indice. Talvez seja melhor separar em várias funções
     def atribuicao(self, items):
+        self.counter += 1
         val = self.visit_children(items)
         val0 = val[0]
         tipo = None
@@ -382,7 +432,7 @@ class TransformerLinguagem(Interpreter):
         nome = None
         valor = None
         if type(val0) == tuple:
-            nome,indice = val0
+            nome,indice = val0[1]
             valor = val[1]
         elif val0.type =="TYPE":
             tipo = str(val0)
@@ -391,6 +441,9 @@ class TransformerLinguagem(Interpreter):
         elif val0.type =="VAR":
             nome = str(val0)
             valor = val[1]
+        instruction_text = f"{nome} = {val_to_str(valor)}"
+        self.graph.add_node(self.counter, shape="oval", label=instruction_text)
+        self = new_edge(self)
         if not tipo:
             flag = True
             nivel_atual = self.nivel
@@ -441,45 +494,33 @@ class TransformerLinguagem(Interpreter):
                 self.mencionado.append(nome)
         pass
 
+    def expressao(self,items):
+        val = self.visit_children(items)
+        return val[0]
+
     def adicao(self, items):
         val = self.visit_children(items)
         val1 = val[0]
         val2 = val[1]
-        if type(val1) == (str or float) and type(val2) == (str or float):
-            result = val1 + val2
-        else:
-            result = 0
-        return result
+        return "EXPRESSAO",(val1, "+" ,val2)
     
     def subtracao(self, items):
         val = self.visit_children(items)
         val1 = val[0]
         val2 = val[1]
-        if type(val1) == float and type(val2) == float:
-            result = val1 - val2
-        else:
-            result = 0
-        return result
+        return "EXPRESSAO",(val1, "-" ,val2)
     
     def multiplicacao(self, items):
         val = self.visit_children(items)
         val1 = val[0]
         val2 = val[1]
-        if type(val1) == float and type(val2) == float:
-            result = val1 * val2
-        else:
-            result = 0
-        return result
+        return "EXPRESSAO",(val1, "*" ,val2)
     
     def divisão(self, items):
         val = self.visit_children(items)
         val1 = val[0]
         val2 = val[1]
-        if type(val1) == float and type(val2) == float and val2 != 0:
-            result = val1 / val2
-        else:
-            result = 0
-        return result
+        return "EXPRESSAO",(val1, "/" ,val2)
     
     def exp_val(self, items):
         val = self.visit_children(items)
@@ -487,23 +528,16 @@ class TransformerLinguagem(Interpreter):
 
     def func(self, items):
         val = self.visit_children(items)
-        name = val[0]
+        name = str(val[0])
         lista = val[1]                       
-        return name
+        return "FUNCAO",(name,lista)
     ##################TODO#####################################
     #ir buscar o valor no indice e devolver esse valor
     #ainda é preciso resolver a est_dados
-    def func_atr_exp(self, items):
-        val = self.visit_children(items)[0]
-        print("[func_atr_exp]:", val)
-        name = val[0]
-        lista = val[1]                       
-        return name
     
     def func_atr(self, items):
         val = self.visit_children(items)
-
-        name = val[0]
+        name = str(val[0])
         indice = val[1]                       
         flag_name = True
         flag_indice = True
@@ -520,55 +554,62 @@ class TransformerLinguagem(Interpreter):
                 self.not_defined.append(name)
             if flag_indice:
                 self.not_defined.append(indice)
-        return name,indice
+        return "INDICE",(name,indice)
 
     def est_dados(self, items):
         val = self.visit_children(items)
-        print(type(val[0]))
         return val[0]
 
     def bool_expressao(self, items):
         return items
+    #createCondition(variables, symbol, number, graph, counter):
+    def bool_and(self, items):
+        tudo = self.visit_children(items)
+        return (tudo[0], "&&" ,tudo[1])
+    
+    def bool_or(self, items):
+        tudo = self.visit_children(items)
+        return (tudo[0], "||" ,tudo[1])
     
     def menor(self, items):
         tudo = self.visit_children(items)
-        return (tudo[0],tudo[1])
+        return (tudo[0], "<" ,tudo[1])
     
     def menor_igual(self, items):
         tudo = self.visit_children(items)
-        return tudo[0],tudo[1]
+        return (tudo[0], "<=" ,tudo[1])
     
     def maior(self, items):
-        val1 = items[0]
-        val2 = items[1]
         tudo = self.visit_children(items)
-        return items
+        return (tudo[0], ">" ,tudo[1])
     
     def maior_igual(self, items):
-        val1 = items[0]
-        val2 = items[1]
         tudo = self.visit_children(items)
-        return items
+        return (tudo[0], ">=" ,tudo[1])
     
     def igual(self, items):
         tudo = self.visit_children(items)
-        return (tudo[0],tudo[1])
+        return (tudo[0], "==" ,tudo[1])
     
     def diferente(self, items):
-        val1 = items[0]
-        val2 = items[1]
         tudo = self.visit_children(items)
-        return items
+        return (tudo[0], "!=" ,tudo[1])
+    
 
     def def_func(self, items):
         self.nivel += 1
+
         self.variaveis[self.nivel] = {}
         lista = self.visit(items.children[2])
         dicionario = self.variaveis[self.nivel]
         for elems in lista:
             dicionario[elems] = {"valor": 1, "tipo": None}
+        instruction_text =  f"return {self.visit(items.children[4])}"
         self.variaveis[self.nivel] = dicionario
         tudo = self.visit_children(items)
+        self.counter +=1
+        self.graph.add_node(self.counter, shape="oval", label= instruction_text)
+        self = new_edge(self)
         nome = str(tudo[1])
         for keys in dicionario.keys():
             val = dicionario[keys]
@@ -586,17 +627,25 @@ class TransformerLinguagem(Interpreter):
         return items
 
     def while_loop(self, items):
+        ##incrementar variaveis
         self.ciclo+=1
         self.nivel += 1
+        self.counter +=1 
         if self.strut_controlo:
             self.aninhado += 1
         self.strut_controlo.append(1)
         self.variaveis[self.nivel] = {}
-        tudo = self.visit_children(items)
-        expressao = tudo[0]
-        linhas = tudo[1]
-        self.graph.add_node(tudo[0], shape="diamond")
+        ##criar nodo no grafico
+        original = self.counter
+        triplo = self.visit(items.children[0])
+        createCondition("while", triplo, self.graph, self.counter)
+        self = new_edge(self)
+        #visitar os filhos
+        self.visit_children(items)
+        self.temp = original
+        self.graph.add_edge(self.counter, original)
         dicionario = self.variaveis[self.nivel]
+        #tratamento dos resultados da visita
         for keys in dicionario.keys():
             val = dicionario[keys]
             if val["valor"] == None:
@@ -607,9 +656,11 @@ class TransformerLinguagem(Interpreter):
             else:
                 aux = self.counter_tipo[tipo] + 1
                 self.counter_tipo[tipo] = aux
+        #decrementar variaveis
         self.variaveis.pop(self.nivel)
         self.strut_controlo.pop()
         self.nivel -= 1
+        
         return items
     
     def do_while_statement(self,items):
@@ -619,9 +670,13 @@ class TransformerLinguagem(Interpreter):
             self.aninhado += 1
         self.strut_controlo.append(1)
         self.variaveis[self.nivel] = {}
-        tudo = self.visit_children(items)
-        expressao = tudo[1]
-        linhas = tudo[0]
+        original = self.counter + 1
+        print("[do_while]",self.visit(items.children[0]))
+        triplo = self.visit(items.children[1])
+        self.counter += 1
+        createCondition( "while", triplo, self.graph, self.counter)
+        self = new_edge(self)
+        self.graph.add_edge(self.counter, original)
         dicionario = self.variaveis[self.nivel]
         for keys in dicionario.keys():
             val = dicionario[keys]
@@ -636,13 +691,14 @@ class TransformerLinguagem(Interpreter):
         self.variaveis.pop(self.nivel)
         self.strut_controlo.pop()
         self.nivel -= 1
+
+
         return items
 
 
     def if_statement(self, items): 
         self.condicional+=1
         self.nivel += 1
-        self.counter +=1 
         if self.strut_controlo:
             self.aninhado += 1
             if (self.struct_if):
@@ -650,20 +706,18 @@ class TransformerLinguagem(Interpreter):
         self.strut_controlo.append(1)
         self.struct_if.append(1)
         self.variaveis[self.nivel] = {}
-        print("AQUIIII")
-        variable = items.children[0].children[0].children[0].children[0].value
-        number = items.children[0].children[1].children[0].children[0].value
-        symbol = items.children[0].data
-        print(variable)
-        print(number)
-        print(symbol)
-        #print(tudo[0])
-        #expressao = tudo[0]
-        instruction_text =  f"{variable}{symbol}{number}"
-        self.graph.add_node(self.counter, shape="diamond", label= instruction_text)
-        if(self.counter >1):
-            self.graph.add_edge((self.counter)-1, self.counter)   
-        #linhas = tudo[1]
+        self.counter +=1
+
+        #tratar do grafico
+        original = self.counter
+        triplo = self.visit(items.children[0])
+        createCondition( "if", triplo, self.graph, self.counter)
+        self = new_edge(self)
+        #visitar as linhas
+        print(self.visit(items.children[1]))#ler as linhas dentro do if
+        self.temp = original
+        self.temp_if[self.counter] = self.nivel
+        #tratar das variaveis dps de visitar os filhos
         dicionario = self.variaveis[self.nivel]
         for keys in dicionario.keys():
             val = dicionario[keys]
@@ -675,10 +729,16 @@ class TransformerLinguagem(Interpreter):
             else:
                 aux = self.counter_tipo[tipo] + 1
                 self.counter_tipo[tipo] = aux
+        #dar pop
         self.variaveis.pop(self.nivel)
         self.strut_controlo.pop()
         self.struct_if.pop()
         self.nivel -= 1
+        #elif e else
+        if len(items.children) > 2:
+            self.visit(items.children[2])#caso exista visitar o elif
+            if len(items.children) == 4:
+                self.visit(items.children[3])#caso exista visiar o else
         return items
 
     def elif_statement(self, items):
@@ -688,9 +748,15 @@ class TransformerLinguagem(Interpreter):
             self.aninhado += 1
         self.strut_controlo.append(1)
         self.variaveis[self.nivel] = {}
-        tudo = self.visit_children(items)
-        expressao = tudo[0]
-        linhas = tudo[1]
+        self.counter +=1 
+
+        triplo = self.visit(items.children[0])
+        original = self.counter
+        createCondition( "elif", triplo, self.graph, self.counter)
+        self = new_edge(self)
+        self.visit_children(items)
+        self.temp_if[self.counter] = self.nivel
+        self.temp = original
         dicionario = self.variaveis[self.nivel]
         for keys in dicionario.keys():
             val = dicionario[keys]
@@ -705,7 +771,7 @@ class TransformerLinguagem(Interpreter):
         self.strut_controlo.pop()
         self.variaveis.pop(self.nivel)
         self.nivel -= 1
-        pass
+        return 
 
     def else_statement(self, items):
         self.condicional+=1
@@ -714,8 +780,8 @@ class TransformerLinguagem(Interpreter):
         if self.strut_controlo:
             self.aninhado += 1
         self.strut_controlo.append(1)
-        tudo = self.visit_children(items)
-        linhas = tudo[0]
+        self.visit_children(items)
+        self.temp_if[self.counter] = self.nivel
         dicionario = self.variaveis[self.nivel]
         for keys in dicionario.keys():
             val = dicionario[keys]
@@ -781,6 +847,7 @@ class TransformerLinguagem(Interpreter):
         lista = self.visit_children(items)
         dic = {}
         for chave, val in lista:
+            chave = chave.strip('"')
             dic[chave] = val
         return dic
 
@@ -833,7 +900,6 @@ class TransformerLinguagem(Interpreter):
     def visualizar(self):
         # Salva e exibe o gráfico
         self.graph.draw("control_flow_graph.png", prog="dot", format="png")
-        
     
 
     def gerar_relatorio(self):
@@ -946,10 +1012,9 @@ class TransformerLinguagem(Interpreter):
     
     
 p = Lark(grammar2) 
-tree1 = p.parse(texto3)
+tree1 = p.parse(texto2)
 analiser= TransformerLinguagem()
-#tree= analiser.visit(tree1)
-treeT = analiser.transform(tree1)
-#tree_png = p.tree_to_png(treeT, "tree.png")
-analiser.gerar_relatorio()
+tree= analiser.visit(tree1)
 analiser.visualizar()
+#tree_png = p.tree_to_png(treeT, "tree.png")
+#analiser.gerar_relatorio()
