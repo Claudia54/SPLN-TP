@@ -15,13 +15,13 @@ def val_to_str(valor):
     return expressao
 
 
-def connect_end(self):
+def connect_end(self, counter):
     if(self.temp_if):
             print("[new_edge]",self.temp_if)
             aux = []
             for indices, nivel_indice in self.temp_if.items():
                 if (self.nivel + 1) == nivel_indice:
-                    self.graph.add_edge(indices, self.counter)
+                    self.graph.add_edge(indices, counter)
                     aux.append(indices)
             for i in aux:
                 self.temp_if.pop(i)
@@ -34,13 +34,13 @@ def new_edge(self):
     if (self.temp != None):
         self.graph.add_edge(self.temp, self.counter)
         self.temp = None 
-        connect_end(self)
+        connect_end(self, self.counter)
    # ligar as instruções do mesmo nivel num if
     else:
         # normais instruções seguidas
         if(self.counter >1):
                 self.graph.add_edge((self.counter)-1, self.counter)
-        connect_end(self)
+        connect_end(self, self.counter)
     return self
 
 def createCondition(tipo, triplo, graph, counter):

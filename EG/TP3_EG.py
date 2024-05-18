@@ -644,6 +644,7 @@ class TransformerLinguagem(Interpreter):
         self.visit_children(items)
         self.temp = original
         self.graph.add_edge(self.counter, original)
+        self = connect_end(self, original) #garantir que todos os caminhos retornam para o while
         dicionario = self.variaveis[self.nivel]
         #tratamento dos resultados da visita
         for keys in dicionario.keys():
