@@ -10,7 +10,7 @@ def process_sql_file(input_file, output_file):
                 outfile.write(line)
 
 input_file = 'dre_dump.sql'
-output_file = 'dre_dump_processed.sql'
+output_file = 'filtered.sql'
 process_sql_file(input_file, output_file)
 
 
