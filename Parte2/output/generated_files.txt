@@ -1,9 +1,0 @@
-
-
-Arquivo: arquivo1.txt
-Conteúdo:
-Conteúdo do arquivo 1
-
-Arquivo: arquivo2.txt
-Conteúdo:
-Conteúdo do arquivo 2
