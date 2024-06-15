@@ -1,0 +1,58 @@
+absolutamente 3
+agitadamente 3
+altamente 3
+completamente 3
+consideravelmente 3
+decididamente 3
+demais 3
+enormemente 3
+especialmente 3
+excecivamente 3
+excepcionalmente 3
+extremamente 3
+fabulosamente 3
+fortemente 3
+fudidamente 3
+grandemente 3
+grandiosamente 3
+incrivelmente 3
+inteiramente 3
+intensamente 3
+majoritariamente 3
+muito muito 3
+na moral 3
+o mais 3
+particularmente 3
+pra caramba 3
+pra valer 3
+predominantemente 3
+profundamente 3
+puramente 3
+realmente 3
+substancialmente 3
+surpreendentemente 3
+tao 3
+terrivelmente 3
+tremendamente 3
+tão 3
+algo -3
+bem pouqinho -3
+dificilmente -3
+escassamente -3
+fracamente -3
+levemente -3
+mais ou menos -3
+muito pouco -3
+ocasionalmente -3
+parcialmente -3
+pouco -3
+pouqinho -3
+quase -3
+so o necessario -3
+superficialmente -3
+tantinho -3
+tipo -3
+um pouco -3
+um pouqinho -3
+um tantinho -3
+um tanto -3

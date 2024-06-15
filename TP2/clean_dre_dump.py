@@ -1,4 +1,4 @@
-
+import os
 import re
 
 def process_sql_file(input_file, output_file):
@@ -57,7 +57,8 @@ def remove_invalid_line(input_file, output_file):
             if 'pg_catalog.set_config' not in line:
                 outfile.write(line)
 
-
+def execute_sqlite_command(sql_file, database):
+    os.system(f"sqlite3 {database} < {sql_file}")
 
 input_file = 'dre_dump.sql'
 output_file = 'filtered_1.sql'
@@ -70,6 +71,11 @@ print("==================== Started add_table_schema ====================")
 add_table_schema(input_file, output_file)
 
 input_file = 'filtered_2.sql'
-output_file = 'database.sql'
+output_file = 'basededados.sql'
 print("==================== Started remove_invalid_line ====================")
 remove_invalid_line(input_file, output_file)
+
+input_file = 'database.sql'
+output_file = 'database.db'
+print("==================== Started execute_sqlite_command ====================")
+execute_sqlite_command(input_file, output_file)
