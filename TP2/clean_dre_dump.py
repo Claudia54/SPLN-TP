@@ -1,22 +1,12 @@
+
 import re
 
 def process_sql_file(input_file, output_file):
     with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
         for line in infile:
-            # Remove linhas que começam com SET
             if not line.startswith('SET'):
-                # Remove 'public.' de INSERT INTO
                 line = re.sub(r'INSERT INTO public\.(\w+)', r'INSERT INTO \1', line)
                 outfile.write(line)
-
-input_file = 'dre_dump.sql'
-output_file = 'filtered.sql'
-process_sql_file(input_file, output_file)
-
-
-
-
-
 
 def add_table_schema(input_file, output_file):
     table_schema1 = """
@@ -60,26 +50,26 @@ def add_table_schema(input_file, output_file):
 
         for line in infile:
             outfile.write(line)
-            
-
-
-input_file = 'filtered.sql'
-output_file = 'filtered_with_schema.sql'
-add_table_schema(input_file, output_file)
-
-
-
 
 def remove_invalid_line(input_file, output_file):
     with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
         for line in infile:
-
             if 'pg_catalog.set_config' not in line:
-
                 outfile.write(line)
 
 
-input_file = 'filtered_with_schema.sql'
-output_file = 'filtered_with_schema_fixed.sql'
-remove_invalid_line(input_file, output_file)
 
+input_file = 'dre_dump.sql'
+output_file = 'filtered_1.sql'
+print("==================== Started process_sql_file ====================")
+process_sql_file(input_file, output_file)
+
+input_file = 'filtered_1.sql'
+output_file = 'filtered_2.sql'
+print("==================== Started add_table_schema ====================")
+add_table_schema(input_file, output_file)
+
+input_file = 'filtered_2.sql'
+output_file = 'database.sql'
+print("==================== Started remove_invalid_line ====================")
+remove_invalid_line(input_file, output_file)
