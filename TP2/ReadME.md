@@ -9,7 +9,7 @@ Finalmente, após a limpeza do ficheiro, são executadas as queries para a cria�
 
 
 # Information retrieval (IR)
-No documento projeto.py descreve-se o processo de criação de um sistema de processamento de texto e recuperação de documentos. O sistema utiliza técnicas de Processamento de Linguagem Natural (PLN) para pré-processar dados textuais, treinar um modelo TF-IDF para similaridade de documentos e implementar um pipeline de Pergunta-Resposta (Q&A) usando um modelo de linguagem pré-treinado. O objetivo é recuperar documentos relevantes de um banco de dados com base em uma consulta e gerar respostas para perguntas predefinidas a partir desses documentos.
+No documento projeto.py descreve-se o processo de criação de um sistema de processamento de texto e recuperação de documentos. O sistema utiliza técnicas de Processamento de Linguagem Natural (PLN) para pré-processar dados textuais, treinar um modelo TF-IDF para similaridade de documentos e implementar um pipeline de Pergunta-Resposta (Q&A) usando um modelo de linguagem pré-treinado. O objetivo é recuperar documentos relevantes de uma base de dados com base em uma consulta e gerar respostas para perguntas predefinidas a partir desses documentos.
 
 Primeiramente, os dados são carregados a partir de um arquivo JSON (drep.json). Cada documento no conjunto de dados contém um campo notes, que é o texto principal utilizado para processamento.
 
@@ -30,4 +30,4 @@ O prompt para o modelo é formatado de maneira que forneça o contexto do docume
 
 
 # Conclusão 
-Este sistema combina técnicas de Processamento de Linguagem Natural (PLN) e manipulação de banco de dados para recuperar e analisar documentos. Pré-processa dados textuais de um arquivo JSON e treina um modelo TF-IDF para calcular similaridades, identificando documentos relevantes em um banco de dados SQLite. Utiliza um modelo de linguagem pré-treinado para gerar respostas baseadas no conteúdo dos documentos recuperados. Um script adicional ajusta um arquivo SQL para compatibilidade com o SQLite e adiciona os esquemas de tabelas necessárias. Isso permite a recuperação eficiente de informações e a geração de respostas contextuais, facilitando a análise de grandes volumes de dados textuais.
+Este sistema combina técnicas de Processamento de Linguagem Natural (PLN) e manipulação de bases de dados para recuperar e analisar documentos. Pré-processa dados textuais de um arquivo JSON e treina um modelo TF-IDF para calcular similaridades, identificando documentos relevantes numa base de dados SQLite. Utiliza um modelo de linguagem pré-treinado para gerar respostas baseadas no conteúdo dos documentos recuperados. Um script adicional ajusta um arquivo SQL para compatibilidade com o SQLite e adiciona os esquemas de tabelas necessárias. Isso permite a recuperação eficiente de informações e a geração de respostas contextuais, facilitando a análise de grandes volumes de dados textuais.
