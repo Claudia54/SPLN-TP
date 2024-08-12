@@ -1,33 +1,31 @@
-# Introdução
-Este projeto foi criado no âmbito de Scripting e Processamento de Linguagem Natural.
-Neste projeto explorou-se vários pontos, através da construção de pequenos programas  exploratórios que funcionaram  como prova de conceito.
+# Introduction
 
-# Processamento de Dados
-Com o ficheiro que foi fornecido pelo professor foi processado e analisado no ficheiro clean_dre_dump.py. 
-Neste script foram retirados os public e os SET do ficheiro e adicionados os esquemas das tabelas necessárias para o armazenamento dos dados. 
-Finalmente, após a limpeza do ficheiro, são executadas as queries para a criação de uma base de dados SQLite.
+This project was created as part of Scripting and Natural Language Processing course. In this project, various aspects were explored through the construction of small exploratory programs that served as proof of concept.
 
+# Data Processing
 
-# Information retrieval (IR)
-No documento projeto.py descreve-se o processo de criação de um sistema de processamento de texto e recuperação de documentos. O sistema utiliza técnicas de Processamento de Linguagem Natural (PLN) para pré-processar dados textuais, treinar um modelo TF-IDF para similaridade de documentos e implementar um pipeline de Pergunta-Resposta (Q&A) usando um modelo de linguagem pré-treinado. O objetivo é recuperar documentos relevantes de uma base de dados com base em uma consulta e gerar respostas para perguntas predefinidas a partir desses documentos.
+The file provided by the professor was processed and analyzed in the `clean_dre_dump.py` script. In this script, the `public` and `SET` statements were removed from the file, and the necessary table schemas for data storage were added. Finally, after cleaning the file, queries were executed to create an SQLite database.
 
-Primeiramente, os dados são carregados a partir de um arquivo JSON (drep.json). Cada documento no conjunto de dados contém um campo notes, que é o texto principal utilizado para processamento.
+# Information Retrieval (IR)
 
-O pré-processamento do texto envolve a conversão do texto para minúsculas, tokenização e remoção de stopwords (palavras comuns que são filtradas). A função gensim.utils.tokenize é utilizada para a tokenização, e as stopwords são removidas usando a biblioteca NLTK.
+The `projeto.py` document describes the process of creating a text processing and document retrieval system. The system uses Natural Language Processing (NLP) techniques to preprocess textual data, train a TF-IDF model for document similarity, and implement a Question-Answering (Q&A) pipeline using a pre-trained language model. The goal is to retrieve relevant documents from a database based on a query and generate answers to predefined questions from these documents.
 
-Em seguida, é criado um dicionário a partir das sentenças tokenizadas, e um corpus Bag-of-Words (BoW) é gerado. Um modelo TF-IDF é treinado utilizando o corpus BoW, e um índice de Similaridade de Matriz Esparsa é criado para calcular as similaridades entre os documentos.
+First, the data is loaded from a JSON file (`drep.json`). Each document in the dataset contains a `notes` field, which is the main text used for processing.
 
-Para processar uma consulta, o texto da consulta é pré-processado, convertido para BoW e transformado usando o modelo TF-IDF. As similaridades entre a consulta e todos os documentos são calculadas e ordenadas em ordem decrescente.
+Text preprocessing involves converting the text to lowercase, tokenization, and removal of stopwords (common words that are filtered out). The `gensim.utils.tokenize` function is used for tokenization, and stopwords are removed using the NLTK library.
 
-Os IDs dos documentos mais relevantes são extraídos, e esses documentos são recuperados de um banco de dados SQLite. Para isso, é utilizada uma função que executa uma consulta SQL no banco de dados para selecionar os documentos pelos seus IDs.
+Next, a dictionary is created from the tokenized sentences, and a Bag-of-Words (BoW) corpus is generated. A TF-IDF model is trained using the BoW corpus, and a Sparse Matrix Similarity Index is created to calculate similarities between documents.
 
+To process a query, the query text is preprocessed, converted to BoW, and transformed using the TF-IDF model. Similarities between the query and all documents are calculated and sorted in descending order.
+
+The IDs of the most relevant documents are extracted, and these documents are retrieved from an SQLite database. For this, a function executes an SQL query on the database to select the documents by their IDs.
 
 # Question and Answering (Q&A)
-Um modelo de linguagem pré-treinado (lfcc/bert-portuguese-squad) é utilizado para gerar respostas a perguntas predefinidas com base no conteúdo dos documentos recuperados. Para cada documento, um conjunto de perguntas é feito, e o modelo gera respostas baseadas no conteúdo do documento.
 
-O prompt para o modelo é formatado de maneira que forneça o contexto do documento e a pergunta a ser respondida. O modelo gera uma resposta para cada pergunta, que é então extraída e apresentada.
+A pre-trained language model (`lfcc/bert-portuguese-squad`) is used to generate answers to predefined questions based on the content of the retrieved documents. For each document, a set of questions is posed, and the model generates answers based on the document's content.
 
+The prompt for the model is formatted to provide the document context and the question to be answered. The model generates an answer for each question, which is then extracted and presented.
 
+# Conclusion
 
-# Conclusão 
-Este sistema combina técnicas de Processamento de Linguagem Natural (PLN) e manipulação de bases de dados para recuperar e analisar documentos. Pré-processa dados textuais de um arquivo JSON e treina um modelo TF-IDF para calcular similaridades, identificando documentos relevantes numa base de dados SQLite. Utiliza um modelo de linguagem pré-treinado para gerar respostas baseadas no conteúdo dos documentos recuperados. Um script adicional ajusta um arquivo SQL para compatibilidade com o SQLite e adiciona os esquemas de tabelas necessárias. Isso permite a recuperação eficiente de informações e a geração de respostas contextuais, facilitando a análise de grandes volumes de dados textuais.
+This system combines Natural Language Processing (NLP) techniques and database manipulation to retrieve and analyze documents. It preprocesses textual data from a JSON file and trains a TF-IDF model to calculate similarities, identifying relevant documents in an SQLite database. It uses a pre-trained language model to generate answers based on the content of the retrieved documents. An additional script adjusts an SQL file for compatibility with SQLite and adds the necessary table schemas. This setup allows efficient information retrieval and contextual answer generation, facilitating the analysis of large volumes of textual data.
